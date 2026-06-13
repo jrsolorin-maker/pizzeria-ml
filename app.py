@@ -1,21 +1,25 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from prometheus_fastapi_instrumentator import Instrumentator
+import time
+import random
 
-app = FastAPI(title="Pizzería ML - INFOTEP")
+# Tu API de la Pizzería que ya conocemos
+app = FastAPI(title="Pizzería ML - Monitoreada Automatizada")
 
 class PedidoPizza(BaseModel):
     queso_extra: int
     pepperoni: int
     pina: int
 
-@app.get("/")
-def inicio():
-    return {"mensaje": "¡Bienvenido a la Pizzería de Machine Learning! El horno está listo."}
-
 @app.post("/predecir")
 def predecir_gusto(pedido: PedidoPizza):
+    # Simulamos el tiempo de procesamiento del modelo (Latencia)
+    time.sleep(random.uniform(0.1, 0.4)) 
+    
     if pedido.pina == 1:
-        return {"le_gustara_la_pizza": 0, "probabilidad_de_exito": 0.95, "mensaje_del_chef": "Con piña no camina este modelo."}
-    elif pedido.queso_extra == 1 and pedido.pepperoni == 1:
-        return {"le_gustara_la_pizza": 1, "probabilidad_de_exito": 0.99, "mensaje_del_chef": "Combinación perfecta aprobada."}
-    return {"le_gustara_la_pizza": 1, "probabilidad_de_exito": 0.70, "mensaje_del_chef": "Predicción calculada."}
+        return {"le_gustara_la_pizza": 0, "mensaje_del_chef": "Con piña no camina este modelo."}
+    return {"le_gustara_la_pizza": 1, "mensaje_del_chef": "Combinación perfecta aprobada."}
+
+# ¡Aquí activamos los sensores para que Prometheus pueda leer las métricas!
+Instrumentator().instrument(app).expose(app)
